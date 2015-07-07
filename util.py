@@ -3,7 +3,11 @@ def createList(path):
     myList = []
     for line in f:
         myList.append(line.replace("\n", "").split(','))
-    return myList
+    myIntLists = []
+    for i in myList:
+        myIntLists.append([int(i[0]), int(i[1])])
+    return myIntLists
+
 
 def testList(completeList):
     return completeList[:len(completeList)-60]
