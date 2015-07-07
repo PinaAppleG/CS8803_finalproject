@@ -8,6 +8,10 @@ def createList(path):
         myIntLists.append([int(i[0]), int(i[1])])
     return myIntLists
 
+def inBounds(coordinates):
+    # These numbers are based on the avg of the 10 tests
+    return (coordinates[0] > 250 and coordinates[0] < 1680 and coordinates[1] > 117 and coordinates[1] < 971)
+
 def printBounds(path):
     maxX = 0
     maxY = 0
