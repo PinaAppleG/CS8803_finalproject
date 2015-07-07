@@ -8,6 +8,24 @@ def createList(path):
         myIntLists.append([int(i[0]), int(i[1])])
     return myIntLists
 
+def printBounds(path):
+    maxX = 0
+    maxY = 0
+    minX = 100000
+    minY = 100000
+    for i in createList(path):
+      if(i[0] > maxX):
+        maxX = i[0]
+      if(i[0] < minX):
+        minX = i[0]
+      if(i[1] > maxY):
+        maxY = i[1]
+      if(i[1] < minY):
+        minY = i[1]
+    print("maxX: " + str(maxX))
+    print("maxY: " + str(maxY))
+    print("minX: " + str(minX))
+    print("minY: " + str(minY))
 
 def testList(completeList):
     return completeList[:len(completeList)-60]
