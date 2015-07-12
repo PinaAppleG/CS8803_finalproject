@@ -1,12 +1,39 @@
+from filterpy.kalman import KalmanFilter
+from filterpy.kalman import MerweScaledSigmaPoints
+from filterpy.kalman import UnscentedKalmanFilter as UKF
+from filterpy.common import Q_discrete_white_noise
+
+from optparse import OptionParser
+import numpy as np
+
+import pylab as pl
+
+#Enable debugging
+import pdb
+
+
+def f_cv(x, dt):
+    """ state transition function for a constant velocity aircraft"""
+
+    F = np.array([[1., dt, 0., 0.],
+                  [0., 1., 0., 0.],
+                  [0., 0., 1., dt],
+                  [0., 0., 0., 1.]])
+    return np.dot(F, x)
+
+def h_cv(x):
+    return np.array([x[0], x[2]])
+
+
 def createList(path):
     f = open(path, "r")
     myList = []
     for line in f:
-        myList.append(line.replace("\n", "").split(','))
-    myIntLists = []
-    for i in myList:
-        myIntLists.append([int(i[0]), int(i[1])])
-    return myIntLists
+        entry = line.replace("\r\n", "").split(',')
+        entry = [int(entry[0]), int(entry[1])]
+        myList.append(entry)
+        
+    return myList
 
 def inBounds(coordinates):
     # These numbers are based on the avg of the 10 tests
@@ -30,7 +57,7 @@ def printBounds(path):
     print("maxY: " + str(maxY))
     print("minX: " + str(minX))
     print("minY: " + str(minY))
-
+    
 def testList(completeList):
     return completeList[:len(completeList)-60]
 
@@ -64,12 +91,101 @@ def compare(actual, expected):
         runningSum += dist ** 2
     return sqrt(runningSum)
 
-def run(input):
+def run(measurements):
     # input is a list of lists of locations for every time frame
     # example: [[32,67],[35,67],[36,65],[36,64],[35,63]...]
     # output should be in the same form as input but contain only 60 frames
     output = []
-    # enter code here 
-    
-    # example perfect output from test01.txt: [['1153', '896'], ['1156', '923'], ['1163', '934'], ['1159', '930'], ['1159', '910'], ['1154', '925'], ['1150', '921'], ['1152', '924'], ['1152', '913'], ['1152', '925'], ['1161', '919'], ['1155', '934'], ['1163', '927'], ['1164', '930'], ['1163', '930'], ['1155', '953'], ['1148', '951'], ['1141', '944'], ['1136', '944'], ['1120', '949'], ['1120', '946'], ['1110', '946'], ['1104', '946'], ['1090', '949'], ['1074', '948'], ['1053', '946'], ['1027', '938'], ['1006', '931'], ['993', '926'], ['977', '918'], ['963', '910'], ['938', '897'], ['920', '886'], ['903', '879'], ['880', '865'], ['865', '858'], ['845', '846'], ['821', '834'], ['801', '826'], ['776', '816'], ['751', '810'], ['726', '803'], ['704', '796'], ['679', '790'], ['654', '782'], ['632', '773'], ['613', '761'], ['593', '749'], ['575', '737'], ['560', '728'], ['543', '714'], ['525', '701'], ['507', '688'], ['492', '671'], ['478', '660'], ['465', '645'], ['453', '631'], ['440', '616'], ['426', '594'], ['418', '579']]
+    # enter code here
+    output = filter(measurements)
     return output
+
+
+def filter(measurements):
+
+    dt = 1.0
+    sigma_x, sigma_y = .3, .3
+
+    # x = [x, x', y, y']
+    x = np.array([measurements[0][0], 0., measurements[0][1], 0.])
+
+    G = np.array([[0.5*dt**2],
+                  [dt],
+                  [0.5*dt**2],
+                  [dt]])
+    
+    Q = G*G.T*0.1**2
+
+    H = np.array([[1., 0., 0., 0.],
+                  [0., 0., 1., 0.]])
+
+    # Info available http://nbviewer.ipython.org/github/rlabbe/Kalman-and-Bayesian-Filters-in-Python/blob/master/05_Multivariate_Kalman_Filters.ipynb
+    sigmas = MerweScaledSigmaPoints(4, alpha=.1, beta=2., kappa=1.)
+    
+    bot_filter = UKF(dim_x=4, dim_z=2, fx=f_cv, hx=h_cv, dt=dt, points=sigmas)
+    bot_filter.x = np.array([0., 0., 0., 0.])
+    #bot_filter.F = F
+    #bot_filter.H = np.asarray(H)
+    #bot_filter.Q = Q
+    bot_filter.Q[0:2, 0:2] = Q_discrete_white_noise(2, dt=1, var=1.0)
+    bot_filter.Q[2:4, 2:4] = Q_discrete_white_noise(2, dt=1, var=1.0)
+    bot_filter.P *= 10
+    bot_filter.R = np.diag([0.01, 0.01])
+
+    observable_meas = measurements[0:len(measurements)-60]
+
+    pos, cov = [], []
+    for z in observable_meas:
+        pos.append(bot_filter.x)
+        cov.append(bot_filter.P)
+        
+        bot_filter.update(z)
+        bot_filter.predict()
+
+    for i in range(0,60):
+        bot_filter.predict()
+        pos.append(bot_filter.x)
+        
+    return pos
+
+#Parse command line options
+parser = OptionParser()
+parser.add_option("-f", "--file", dest="filename",
+                  help="Input file of robot positions", metavar="FILE")
+parser.add_option("-q", "--quiet",
+                  action="store_false", dest="verbose", default=True,
+                  help="don't print status messages to stdout")
+
+(options, args) = parser.parse_args()
+
+if options.filename:
+    measurements = np.asarray(createList(options.filename))
+    kf_out = run(measurements)
+else:
+    print "Must supply filename"
+
+
+pl.figure(figsize=(16,6))
+
+start = len(measurements) - 100
+finish = len(measurements) - 40
+
+true_measurements = np.asarray(createList(options.filename))
+
+
+x_vals = [0.0]
+y_vals = [0.0]
+
+for i in range(1, len(kf_out)-1):
+    x_vals.append(kf_out[i][0])
+    y_vals.append(kf_out[i][2])
+
+x_vals = np.asarray(x_vals)
+y_vals = np.asarray(y_vals)
+
+
+#obs_scatter = pl.scatter(true_measurements[start:,0], true_measurements[start:,1], marker='x', color='r', label='observations')
+kf_line = pl.plot(x_vals[start:finish], y_vals[start:finish], 'r--', true_measurements[start:finish,0], true_measurements[start:finish,1], 'bs')
+pl.show()
+
+
