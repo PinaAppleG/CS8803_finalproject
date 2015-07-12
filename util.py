@@ -1,5 +1,8 @@
 from filterpy.kalman import KalmanFilter
+from filterpy.kalman import MerweScaledSigmaPoints
+from filterpy.kalman import UnscentedKalmanFilter as UKF
 from filterpy.common import Q_discrete_white_noise
+
 from optparse import OptionParser
 import numpy as np
 
@@ -7,6 +10,19 @@ import pylab as pl
 
 #Enable debugging
 import pdb
+
+
+def f_cv(x, dt):
+    """ state transition function for a constant velocity aircraft"""
+
+    F = np.array([[1., dt, 0., 0.],
+                  [0., 1., 0., 0.],
+                  [0., 0., 1., dt],
+                  [0., 0., 0., 1.]])
+    return np.dot(F, x)
+
+def h_cv(x):
+    return np.array([x[0], x[2]])
 
 
 def createList(path):
@@ -64,38 +80,35 @@ def run(measurements):
 
 
 def filter(measurements):
-    #Mask the last 2 seconds of observations
-    #for i in range(len(measurements)-10, len(measurements)):
-    #    measurements[i] = np.ma.masked
 
     dt = 1.0
-        
-    x = np.array([[measurements[0][0]],
-              [measurements[0][1]],
-              [0.],
-              [0.]])
+    sigma_x, sigma_y = .3, .3
 
-    F = np.array([[1., 0., dt, 0.],
-              [0., 0., 1., 0.],
-              [0., 1., 0., dt],
-              [0., 0., 0., 1.]])
+    # x = [x, x', y, y']
+    x = np.array([measurements[0][0], 0., measurements[0][1], 0.])
 
     G = np.array([[0.5*dt**2],
-                  [0.5*dt**2],
                   [dt],
+                  [0.5*dt**2],
                   [dt]])
+    
     Q = G*G.T*0.1**2
 
-    H = np.array([[1., 1., 0., 0.]])
+    H = np.array([[1., 0., 0., 0.],
+                  [0., 0., 1., 0.]])
 
     # Info available http://nbviewer.ipython.org/github/rlabbe/Kalman-and-Bayesian-Filters-in-Python/blob/master/05_Multivariate_Kalman_Filters.ipynb
-    bot_filter = KalmanFilter(dim_x=4, dim_z=2)
-    bot_filter.x = x
-    bot_filter.F = F
-    bot_filter.H = np.asarray(H)
-    bot_filter.Q = Q
-    bot_filter.P *= 1000
-    bot_filter.R = 1
+    sigmas = MerweScaledSigmaPoints(4, alpha=.1, beta=2., kappa=1.)
+    
+    bot_filter = UKF(dim_x=4, dim_z=2, fx=f_cv, hx=h_cv, dt=dt, points=sigmas)
+    bot_filter.x = np.array([0., 0., 0., 0.])
+    #bot_filter.F = F
+    #bot_filter.H = np.asarray(H)
+    #bot_filter.Q = Q
+    bot_filter.Q[0:2, 0:2] = Q_discrete_white_noise(2, dt=1, var=1.0)
+    bot_filter.Q[2:4, 2:4] = Q_discrete_white_noise(2, dt=1, var=1.0)
+    bot_filter.P *= 10
+    bot_filter.R = np.diag([0.01, 0.01])
 
     observable_meas = measurements[0:len(measurements)-60]
 
@@ -132,7 +145,8 @@ else:
 
 pl.figure(figsize=(16,6))
 
-start = len(measurements)-60
+start = len(measurements) - 100
+finish = len(measurements) - 40
 
 true_measurements = np.asarray(createList(options.filename))
 
@@ -141,17 +155,15 @@ x_vals = [0.0]
 y_vals = [0.0]
 
 for i in range(1, len(kf_out)-1):
-    x_vals.append(kf_out[i][0][0])
-    y_vals.append(kf_out[i][0][1])
+    x_vals.append(kf_out[i][0])
+    y_vals.append(kf_out[i][2])
 
 x_vals = np.asarray(x_vals)
 y_vals = np.asarray(y_vals)
 
-print kf_out[0:100]
-
 
 #obs_scatter = pl.scatter(true_measurements[start:,0], true_measurements[start:,1], marker='x', color='r', label='observations')
-kf_line = pl.plot(x_vals[start:], y_vals[start:], 'r--', true_measurements[start:,0], true_measurements[start:,1], 'bs')
+kf_line = pl.plot(x_vals[start:finish], y_vals[start:finish], 'r--', true_measurements[start:finish,0], true_measurements[start:finish,1], 'bs')
 pl.show()
 
 
