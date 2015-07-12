@@ -35,6 +35,29 @@ def createList(path):
         
     return myList
 
+def inBounds(coordinates):
+    # These numbers are based on the avg of the 10 tests
+    return (coordinates[0] > 250 and coordinates[0] < 1680 and coordinates[1] > 117 and coordinates[1] < 971)
+
+def printBounds(path):
+    maxX = 0
+    maxY = 0
+    minX = 100000
+    minY = 100000
+    for i in createList(path):
+      if(i[0] > maxX):
+        maxX = i[0]
+      if(i[0] < minX):
+        minX = i[0]
+      if(i[1] > maxY):
+        maxY = i[1]
+      if(i[1] < minY):
+        minY = i[1]
+    print("maxX: " + str(maxX))
+    print("maxY: " + str(maxY))
+    print("minX: " + str(minX))
+    print("minY: " + str(minY))
+    
 def testList(completeList):
     return completeList[:len(completeList)-60]
 
