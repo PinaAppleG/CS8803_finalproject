@@ -1,3 +1,6 @@
+import matplotlib
+# Force matplotlib to not use any Xwindows backend.
+matplotlib.use('Agg')
 from filterpy.kalman import KalmanFilter
 from filterpy.kalman import MerweScaledSigmaPoints
 from filterpy.kalman import UnscentedKalmanFilter as UKF
@@ -30,6 +33,13 @@ def f_cv(x, dt):
 def h_cv(x):
     return np.array([x[0], x[1]])
 
+def writeToFile(measurements):
+    if(len(measurements) != 60):
+        print("WRONG SIZE BEING PRINTED!")
+    f = open('prediction.txt', 'w')    
+    for measurement in measurements:
+        f.write(str(int(np.asscalar(measurement[0]))) + "," + str(int(np.asscalar(measurement[1]))) + "\n")
+    f.close()
 
 def createList(path):
     f = open(path, "r")
@@ -191,5 +201,5 @@ y_vals = np.asarray(y_vals)
 #obs_scatter = pl.scatter(true_measurements[start:,0], true_measurements[start:,1], marker='x', color='r', label='observations')
 kf_line = pl.plot(x_vals[start:finish], y_vals[start:finish], 'r--', true_measurements[start:finish,0], true_measurements[start:finish,1], 'bs')
 pl.show()
-
+writeToFile(kf_out[len(kf_out)-60:])
 
