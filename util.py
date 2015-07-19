@@ -3,6 +3,8 @@ from filterpy.kalman import MerweScaledSigmaPoints
 from filterpy.kalman import UnscentedKalmanFilter as UKF
 from filterpy.common import Q_discrete_white_noise
 
+from math import *
+
 from optparse import OptionParser
 import numpy as np
 
@@ -15,14 +17,15 @@ import pdb
 def f_cv(x, dt):
     """ state transition function for a constant velocity aircraft"""
 
-    F = np.array([[1., dt, 0., 0.],
-                  [0., 1., 0., 0.],
-                  [0., 0., 1., dt],
-                  [0., 0., 0., 1.]])
-    return np.dot(F, x)
+    x_pred = [(x[0] + (dt * cos(x[3]) * x[2])), (x[1] + (dt * sin(x[3]) * x[2])), x[2], x[3]]
+
+    x_pred[2] = sqrt((x_pred[0] - x[0])**2 + (x_pred[1] - x[1])**2)
+    x_pred[3] = atan2(x_pred[1], x_pred[0])
+        
+    return x_pred
 
 def h_cv(x):
-    return np.array([x[0], x[2]])
+    return np.array([x[0], x[1]])
 
 
 def createList(path):
@@ -109,15 +112,15 @@ def filter(measurements):
     # x = [x, x', y, y']
     x = np.array([measurements[0][0], 0., measurements[0][1], 0.])
 
-    G = np.array([[0.5*dt**2],
-                  [dt],
-                  [0.5*dt**2],
-                  [dt]])
-    
-    Q = G*G.T*0.1**2
+    #G = np.array([[0.5*dt**2],
+    #              [dt],
+    #              [0.5*dt**2],
+    #              [dt]])
+    # 
+    #Q = G*G.T*0.1**2
 
     H = np.array([[1., 0., 0., 0.],
-                  [0., 0., 1., 0.]])
+                  [0., 1., 0., 0.]])
 
     # Info available http://nbviewer.ipython.org/github/rlabbe/Kalman-and-Bayesian-Filters-in-Python/blob/master/05_Multivariate_Kalman_Filters.ipynb
     sigmas = MerweScaledSigmaPoints(4, alpha=.1, beta=2., kappa=1.)
@@ -125,7 +128,7 @@ def filter(measurements):
     bot_filter = UKF(dim_x=4, dim_z=2, fx=f_cv, hx=h_cv, dt=dt, points=sigmas)
     bot_filter.x = np.array([0., 0., 0., 0.])
     #bot_filter.F = F
-    #bot_filter.H = np.asarray(H)
+    bot_filter.H = np.asarray(H)
     #bot_filter.Q = Q
     bot_filter.Q[0:2, 0:2] = Q_discrete_white_noise(2, dt=1, var=1.0)
     bot_filter.Q[2:4, 2:4] = Q_discrete_white_noise(2, dt=1, var=1.0)
@@ -167,18 +170,19 @@ else:
 
 pl.figure(figsize=(16,6))
 
-start = len(measurements) - 100
-finish = len(measurements) - 40
+start = len(measurements) - 200
+finish = len(measurements) - 50
 
 true_measurements = np.asarray(createList(options.filename))
-
 
 x_vals = [0.0]
 y_vals = [0.0]
 
+#pdb.set_trace()
+
 for i in range(1, len(kf_out)-1):
     x_vals.append(kf_out[i][0])
-    y_vals.append(kf_out[i][2])
+    y_vals.append(kf_out[i][1])
 
 x_vals = np.asarray(x_vals)
 y_vals = np.asarray(y_vals)
