@@ -37,6 +37,22 @@ Each approach has its strength and weaknesses. The obvious strength of Kalman Fi
 ###Kalman Filter
 Initially our approach to solving the problem via Kalman Filters was limited to trying to keep up with the velocity of the robot as it moved along. We began by keeping track of the position of the x,y coordinates as well as the velocity in the x and y direction. This method proved to be helpful but did not produce very good results. The issue we had when solving the problem this way was that when we got to the end of our measurement list and had to start predicting data points we could only predict a straight line as all we had to go on was velocity of the robot.
 
+Below is our state transition function for our Constant Velocity Kalman Filter. We simply added the velocity to the current x and y positions in order to calculate the next position. This simplistic approach produced results that were not completley off base.
+
+	def f_linear(x, dt):
+    F = np.array([[1, dt, 0., 0.],
+                  [0, 1, 0., 0.],
+                  [0, 0, 1, dt],
+                  [0, 0, 0,  1]])
+    return np.dot(F, x)
+    
+There were a few other parameters that we had to work through when creating our KF function. One was the noise Covariance matrix. For the noise covariance matrix we used a function built into filterpy to produce a discrete time Wiener process. For the measurement noise matrix we set a small value as we were assuming no measurement noise in this problem. We also set our initial covariance matrix to relativley large values as we had no idea what the initial values for the velocity should be.
+
+	bot_filter.Q[0:2, 0:2] = Q_discrete_white_noise(2, dt=1, var=0.1)
+    bot_filter.Q[2:4, 2:4] = Q_discrete_white_noise(2, dt=1, var=0.1)
+    bot_filter.P *= 500
+    bot_filter.R = np.diag([0.0001, 0.0001])
+
 ###Unscented Kalman Filter
 After not getting the results we wanted from a basic Kalman Filter with a Constant Velocity model we decided to explore Unscented Kalman Filters. In our reading we found that UKF were particularly well suited for nonlinear problems and were relativley simple to implements. Our readings also explained that UKF can often have better results than Extended Kalman Filters. 
 
