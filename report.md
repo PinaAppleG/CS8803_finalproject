@@ -17,6 +17,9 @@ The Kalman Filter approach is the more classical approach to the question. Being
 As we studied in the class lectures, the Kalman Filter works with combining a measurement update (Bayes Rule) and a motion update (Total Probability). Where we are somewhat limited in the question at hand is that we never get a measurement feedback after each of our steps. We must make all of our 60 predictions without a single measurement update. In order to mitigate this problem and continue using the Kalman Filter, we must assume that each motion is the correct motion and continue with our next motion as if the measurement update retrieved was the same as the motion update. A somewhat different way of looking at it would be that the robot takes steps of 60 frames at a time and then gets feedback of its motion with a measurement. We are given the measurements up to N and must then calculate with the Kalman filter the next 60 frames. 
 
 The Gaussian that is formed by the Kalman Filter will be a 2 dimensional oval. 1 of its axis signifies is the likelihood of how far it will go based on its velocity and acceleration, and the other axis signifies the likelihood of how much it will turn. The center will give us the highest probable location of the robot at its next frame.
+
+In our research on Kalman Filters we came across a second form of the Kalman Filter known as the [Unscented Kalman Filter](https://en.wikipedia.org/wiki/Kalman_filter#Unscented_Kalman_filter). This type of Kalman filter is useful in the case of non-linear problems. Since our robot problem fit this description this is the Kalman Filter that we decided to pursue.
+
 ###Particle Filter
 The Particle Filter approach is an extension of the particle filter we studied in class. In the class lectures, we learned about how to find the location of a robot by placing particles around the entire area where the robot could possibly lie facing in assorted directions. As the robot moves around, we apply the same motion to the particles. When the robot senses its surroundings, we are given a better understanding of which particles are likely candidates for being in the same location as the robot. 
 
@@ -32,11 +35,44 @@ Each approach has its strength and weaknesses. The obvious strength of Kalman Fi
  
 #Implementation
 ###Kalman Filter
+Initially our approach to solving the problem via Kalman Filters was limited to trying to keep up with the velocity of the robot as it moved along. We began by keeping track of the position of the x,y coordinates as well as the velocity in the x and y direction. This method proved to be helpful but did not produce very good results. The issue we had when solving the problem this way was that when we got to the end of our measurement list and had to start predicting data points we could only predict a straight line as all we had to go on was velocity of the robot.
+
+###Unscented Kalman Filter
+After not getting the results we wanted from a basic Kalman Filter with a Constant Velocity model we decided to explore Unscented Kalman Filters. In our reading we found that UKF were particularly well suited for nonlinear problems and were relativley simple to implements. Our readings also explained that UKF can often have better results than Extended Kalman Filters. 
+
+We decided to pursue using UKF with a Constant Acceleration model. We believed that if we could keep track of acceleration in the x and y direction that we could keep up with the strange curving patterns that we observed happening with the robot. The function below shows our state transition function. 
+
+	def f_cv(x, dt):
+    """ state transition function for a constant velocity aircraft"""
+
+    F = np.array([[1, dt, (0.5 * (dt**2)),  0., 0., 0.],
+                  [0, 1, dt,  0., 0., 0.],
+                  [0, 0, 1, 0, 0, 0],
+                  [0, 0, 0,  1, dt, (0.5 * (dt**2))],
+                  [0, 0, 0, 0, 1, dt],
+                  [0, 0, 0, 0, 0, 1]])
+    return np.dot(F, x)
+    
+ We looked around on the internet to try to find additional models that might be helpful as well. We kept arriving back at this model due to the simplicity as well as the time limits we had on our program runtime. 
+ 
+ We chose to use the [filterpy](https://filterpy.readthedocs.org/en/latest/) library as a basis for our Filter implementation. The library offers basic Kalman Filters as well as UKF and EKF. 
 
 ###Particle Filter
 
 #Results
 ###Kalman Filter
+
+Below is an example of a resulting prediction using the velocity/position Kalman Filter:
+
+![Linear KF](https://s3.amazonaws.com/cs8803/linear_kf_02.png)
+
+As you can see from the image our predictions look very good until we get to the point that our predictor goes blind and stops getting measurements. At that point we drift away from the desired result quite quickly. Tuning the filter helps to some extent, but for the most part this type of approach does not produce great results.
+
+###Unscented Kalman Filter
+
+The following image shows the results for test case 02. This image shows 10 frames before measurements stop and 20 frames after. As you can see the graph is turning in the direction of the last few measurements. The problem we ran into at this point is that no amount of tuning seemed to correct these wide swings in our predictions. The problem with the constant acceleration model is that our robot is very jittery and the acceleration is unfortunatley not very consistent. Due to this our UKF did not perform as well as expected. 
+
+![UKF](https://s3.amazonaws.com/cs8803/ukf_02_small.png)
 
 ###Particle Filter
 #Opportunities
@@ -58,4 +94,5 @@ Particle 1 is clearly a closer match but if you look closer, that match is decei
 And now Particle b shows an exact match to our robot. All we have to do is subtract (80,20) from the particles.
 
 The drawback to this approach is that the world we are given has walls (unlike a lot of the samples in class in which you fall off one side and appear on the other). That being the case, we would have to devise a system for accounting for the case where either the particle that we are copying hits a wall, or the robot approaches the bounds of the world. Since this adds a lot of complexity to the code and would likely provide minimal improvements in accuracy, we decided to not implement this approach.  
+
 #Conclusion
