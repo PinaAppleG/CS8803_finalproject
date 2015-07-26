@@ -54,7 +54,7 @@ There were a few other parameters that we had to work through when creating our 
     bot_filter.R = np.diag([0.0001, 0.0001])
 
 ###Unscented Kalman Filter
-After not getting the results we wanted from a basic Kalman Filter with a Constant Velocity model we decided to explore Unscented Kalman Filters. In our reading we found that UKF were particularly well suited for nonlinear problems and were relativley simple to implements. Our readings also explained that UKF can often have better results than Extended Kalman Filters. 
+After not getting the results we wanted from a basic Kalman Filter with a Constant Velocity model we decided to explore Unscented Kalman Filters. In our reading we found that UKF were particularly well suited for nonlinear problems and were relativley simple to implement. Our readings also explained that UKF can often have better results than Extended Kalman Filters. 
 
 We decided to pursue using UKF with a Constant Acceleration model. We believed that if we could keep track of acceleration in the x and y direction that we could keep up with the strange curving patterns that we observed happening with the robot. The function below shows our state transition function. 
 
@@ -78,17 +78,44 @@ We decided to pursue using UKF with a Constant Acceleration model. We believed t
 #Results
 ###Kalman Filter
 
-Below is an example of a resulting prediction using the velocity/position Kalman Filter:
+Below is an example of a resulting prediction using the velocity/position Kalman Filter. This example was taken from the 02 input file:
 
 ![Linear KF](https://s3.amazonaws.com/cs8803/linear_kf_02.png)
 
 As you can see from the image our predictions look very good until we get to the point that our predictor goes blind and stops getting measurements. At that point we drift away from the desired result quite quickly. Tuning the filter helps to some extent, but for the most part this type of approach does not produce great results.
+
+
+| Test File        | Score      |
+| ------------- |:-------------:|
+| test01.txt      | 8671.51 |
+| test02.txt      | 3108.55      |
+| test03.txt      | 7130.44      |
+| test04.txt      | 4988.48      |
+| test05.txt      | 3741.43      |
+| test06.txt      | 1816.19      |
+| test07.txt      | 2785.07      |
+| test08.txt      | 4786.96      |
+| test09.txt      | 5326.67      |
+| test10.txt      | 2248.14      |
 
 ###Unscented Kalman Filter
 
 The following image shows the results for test case 02. This image shows 10 frames before measurements stop and 20 frames after. As you can see the graph is turning in the direction of the last few measurements. The problem we ran into at this point is that no amount of tuning seemed to correct these wide swings in our predictions. The problem with the constant acceleration model is that our robot is very jittery and the acceleration is unfortunatley not very consistent. Due to this our UKF did not perform as well as expected. 
 
 ![UKF](https://s3.amazonaws.com/cs8803/ukf_02_small.png)
+
+| Test File        | Score      |
+| ------------- |:-------------:|
+| test01.txt      | 9832.56 |
+| test02.txt      | 7821.63      |
+| test03.txt      | 8006.84      |
+| test04.txt      | 8731.55      |
+| test05.txt      | 5516.69      |
+| test06.txt      | 6236.91      |
+| test07.txt      | 1223.27      |
+| test08.txt      | 7186.66      |
+| test09.txt      | 14733.63      |
+| test10.txt      | 9827.92      |
 
 ###Particle Filter
 #Opportunities
