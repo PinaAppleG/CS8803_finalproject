@@ -68,10 +68,21 @@ We decided to pursue using UKF with a Constant Acceleration model. We believed t
                   [0, 0, 0, 0, 1, dt],
                   [0, 0, 0, 0, 0, 1]])
     return np.dot(F, x)
+ 
+ Another issue we ran into was trying to find a more sophisticated noise covariance matrix for our UKF. We ran accross a guide online at the following [link](https://vimeo.com/87854540). We adapted the noise covariance matrix from the video and used it in our solution. The code below shows our chosen co-variance matrix.
+ 
+ 	G = np.array([[0.19*(dt**2)],
+                  [dt],
+                  [1.],
+                  [0.19*(dt**2)],
+                  [dt],
+                  [1.]])
+     
+    Q = G*G.T*0.1**2
     
  We looked around on the internet to try to find additional models that might be helpful as well. We kept arriving back at this model due to the simplicity as well as the time limits we had on our program runtime. 
  
- We chose to use the [filterpy](https://filterpy.readthedocs.org/en/latest/) library as a basis for our Filter implementation. The library offers basic Kalman Filters as well as UKF and EKF. 
+ 
 
 ###Particle Filter
 
@@ -103,6 +114,8 @@ As you can see from the image our predictions look very good until we get to the
 The following image shows the results for test case 02. This image shows 10 frames before measurements stop and 20 frames after. As you can see the graph is turning in the direction of the last few measurements. The problem we ran into at this point is that no amount of tuning seemed to correct these wide swings in our predictions. The problem with the constant acceleration model is that our robot is very jittery and the acceleration is unfortunatley not very consistent. Due to this our UKF did not perform as well as expected. 
 
 ![UKF](https://s3.amazonaws.com/cs8803/ukf_02_small.png)
+
+Below is a breakdown of how the UFK performed against the various input files. Overall the UKF with a Constant Acceleration model failed to perform as well as the constant velocity based model. We found that the noise covariance function had a large impact on how well the filter worked in predicting future positions. Unfortunatley we ran into trouble with developing a more sophisticated model for the noise covariance.
 
 | Test File        | Score      |
 | ------------- |:-------------:|
