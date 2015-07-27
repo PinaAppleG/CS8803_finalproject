@@ -38,7 +38,7 @@ def run(input):
     # and test input data
     lists = []
     # add a list of training data
-    lists.append(createList("inputs/" + "training_data.txt"))
+    lists.append(testList(createList("inputs/" + "training_data.txt")))
     # add the ten input lists
     for i in range (1, 11):
         fileName = "test" + ("%02d" % (i,)) + ".txt"
