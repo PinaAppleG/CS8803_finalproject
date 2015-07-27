@@ -9,10 +9,10 @@ Zachary Bienenfeld
 #Introduction
 We had two approaches to solving the final project. The first approach was by using a Kalman Filter to track the trajectory of the robot over from the time that it leaves the frame and calculate the next 60 frames. The second approach that we took was that of a Particle Filter. The application of Kalman Filter to our scenario at hand is intuitive. Applying a Particle Filter requires a little bit of imagination but the results were significant. 
 
-We tested our results by trimming the inputs by 60 frames (1739 frames instead of 1799) and testing the result against the expected 60 ending frames. We created two gauges for our accuracy. The first was an accuracy test as specified by the instructions for calculating the best score (Pythagorean theorem). This allowed us to gauge an objective score of how our algorithms were performing. However, the score itself was insufficient in gaining an understanding of where our robot was actually going and where it was deviating from its expected path. For that, we implemented a GUI which would pop up after a run through an input and would show the expected path versus the actual path plotted on a graph.  
+We tested our results by trimming the inputs by 60 frames (1739 frames instead of 1799) and testing the result against the expected 60 ending frames. We created two gauges for our accuracy. The first was an accuracy test as specified by the instructions for calculating the best score (Pythagorean Theorem). This allowed us to gauge an objective score of how our algorithms were performing. However, the score itself was insufficient in gaining an understanding of where our robot was actually going and where it was deviating from its expected path. For that, we implemented a GUI which would pop up after a run through an input and would show the expected path versus the actual path plotted on a graph.  
 #Overview 
 ###Kalman Filter
-The Kalman Filter approach is the more classical approach to the question. Being that we have the previous movements, we can use a Kalman Filter to find a most likely next move as a Gaussian. There are two challenges which the Kalman Filter can be applied to resolve. The first is the 1 dimensional velocity of the robot. As the robot moves across the board it accelerates. When it crashes into the wall it is then slowed down and will once again gain momentum as it is free to roam. The second challenge is accounting for the 2 dimentional curving of the robot. 
+The Kalman Filter approach is the more classical approach to the question. Being that we have the previous movements, we can use a Kalman Filter to find a most likely next move as a Gaussian. There are two challenges which the Kalman Filter can be applied to resolve. The first is the 1 dimensional velocity of the robot. As the robot moves across the board it accelerates. When it crashes into the wall it is then slowed down and will once again gain momentum as it is free to roam. The second challenge is accounting for the 2 dimensional curving of the robot. 
 
 As we studied in the class lectures, the Kalman Filter works with combining a measurement update (Bayes Rule) and a motion update (Total Probability). Where we are somewhat limited in the question at hand is that we never get a measurement feedback after each of our steps. We must make all of our 60 predictions without a single measurement update. In order to mitigate this problem and continue using the Kalman Filter, we must assume that each motion is the correct motion and continue with our next motion as if the measurement update retrieved was the same as the motion update. A somewhat different way of looking at it would be that the robot takes steps of 60 frames at a time and then gets feedback of its motion with a measurement. We are given the measurements up to N and must then calculate with the Kalman filter the next 60 frames. 
 
@@ -29,7 +29,7 @@ In the class lectures there was a re-sampling stage in which filters that became
 
 In some ways this use of the particle filter is the opposite of the particle filter studied in class. For in class, the particles were following the robot so that we can assess where the likely position of the robot is. In our case, the robot (the current state) is following the particles (the previous frames). And in our case, we know the exact location of the robot at the current state, we simply wish to derive from it which is the most likely particle filter (past frame) to trace. 
 
-As discussed in class, switching between approaches mid-run can cause a robot to quickly jerk out of position. Averaging the approaches would remove the jerkiness but would be computationally heavier and would not offer a better result, rather would supply a result that is imprecise according to both of the the approaches. 
+As discussed in class, switching between approaches mid-run can cause a robot to quickly jerk out of position. Averaging the approaches would remove the jerkiness but would be computationally heavier and would not offer a better result, rather would supply a result that is imprecise according to both of the approaches. 
 
 Each approach has its strength and weaknesses. The obvious strength of Kalman Filter over the Particle Filter is that the Particle Filter will only work if it finds a sufficient match in the training; if however there is no "particle" from which to base the current move, the Particle Filter will have trouble locating itself. For example, in the 7th input the robot turns over and for a period of 25 seconds is practically stationary. As we explain below, our algorithm includes the current video as training and uses them as particles. If however we chose not to use that implementation, rather to base solely on the training video, we would have no particle to base the current stationary movement on. The Kalman Filter on the other hand requires no such training. The Kalman Filter takes into account only its recent moves in ascertaining the velocity and turning direction of the robot. 
  
@@ -37,7 +37,7 @@ Each approach has its strength and weaknesses. The obvious strength of Kalman Fi
 ###Kalman Filter
 Initially our approach to solving the problem via Kalman Filters was limited to trying to keep up with the velocity of the robot as it moved along. We began by keeping track of the position of the x,y coordinates as well as the velocity in the x and y direction. This method proved to be helpful but did not produce very good results. The issue we had when solving the problem this way was that when we got to the end of our measurement list and had to start predicting data points we could only predict a straight line as all we had to go on was velocity of the robot.
 
-Below is our state transition function for our Constant Velocity Kalman Filter. We simply added the velocity to the current x and y positions in order to calculate the next position. This simplistic approach produced results that were not completley off base.
+Below is our state transition function for our Constant Velocity Kalman Filter. We simply added the velocity to the current x and y positions in order to calculate the next position. This simplistic approach produced results that were not completely off base.
 
 	def f_linear(x, dt):
     F = np.array([[1, dt, 0., 0.],
@@ -46,7 +46,7 @@ Below is our state transition function for our Constant Velocity Kalman Filter. 
                   [0, 0, 0,  1]])
     return np.dot(F, x)
     
-There were a few other parameters that we had to work through when creating our KF function. One was the noise Covariance matrix. For the noise covariance matrix we used a function built into filterpy to produce a discrete time Wiener process. For the measurement noise matrix we set a small value as we were assuming no measurement noise in this problem. We also set our initial covariance matrix to relativley large values as we had no idea what the initial values for the velocity should be.
+There were a few other parameters that we had to work through when creating our KF function. One was the noise Covariance matrix. For the noise covariance matrix we used a function built into filterpy to produce a discrete time Wiener process. For the measurement noise matrix we set a small value as we were assuming no measurement noise in this problem. We also set our initial covariance matrix to relatively large values as we had no idea what the initial values for the velocity should be.
 
 	bot_filter.Q[0:2, 0:2] = Q_discrete_white_noise(2, dt=1, var=0.1)
     bot_filter.Q[2:4, 2:4] = Q_discrete_white_noise(2, dt=1, var=0.1)
@@ -54,7 +54,7 @@ There were a few other parameters that we had to work through when creating our 
     bot_filter.R = np.diag([0.0001, 0.0001])
 
 ###Unscented Kalman Filter
-After not getting the results we wanted from a basic Kalman Filter with a Constant Velocity model we decided to explore Unscented Kalman Filters. In our reading we found that UKF were particularly well suited for nonlinear problems and were relativley simple to implement. Our readings also explained that UKF can often have better results than Extended Kalman Filters. 
+After not getting the results we wanted from a basic Kalman Filter with a Constant Velocity model we decided to explore Unscented Kalman Filters. In our reading we found that UKF were particularly well suited for nonlinear problems and were relatively simple to implement. Our readings also explained that UKF can often have better results than Extended Kalman Filters. 
 
 We decided to pursue using UKF with a Constant Acceleration model. We believed that if we could keep track of acceleration in the x and y direction that we could keep up with the strange curving patterns that we observed happening with the robot. The function below shows our state transition function. 
 
@@ -69,7 +69,7 @@ We decided to pursue using UKF with a Constant Acceleration model. We believed t
                   [0, 0, 0, 0, 0, 1]])
     return np.dot(F, x)
  
- Another issue we ran into was trying to find a more sophisticated noise covariance matrix for our UKF. We ran accross a guide online at the following [link](https://vimeo.com/87854540). We adapted the noise covariance matrix from the video and used it in our solution. The code below shows our chosen co-variance matrix.
+ Another issue we ran into was trying to find a more sophisticated noise covariance matrix for our UKF. We ran across a guide online at the following [link](https://vimeo.com/87854540). We adapted the noise covariance matrix from the video and used it in our solution. The code below shows our chosen co-variance matrix.
  
  	G = np.array([[0.19*(dt**2)],
                   [dt],
@@ -123,11 +123,11 @@ As you can see from the image our predictions look very good until we get to the
 
 ###Unscented Kalman Filter
 
-The following image shows the results for test case 02. This image shows 10 frames before measurements stop and 20 frames after. As you can see the graph is turning in the direction of the last few measurements. The problem we ran into at this point is that no amount of tuning seemed to correct these wide swings in our predictions. The problem with the constant acceleration model is that our robot is very jittery and the acceleration is unfortunatley not very consistent. Due to this our UKF did not perform as well as expected. 
+The following image shows the results for test case 02. This image shows 10 frames before measurements stop and 20 frames after. As you can see the graph is turning in the direction of the last few measurements. The problem we ran into at this point is that no amount of tuning seemed to correct these wide swings in our predictions. The problem with the constant acceleration model is that our robot is very jittery and the acceleration is unfortunately not very consistent. Due to this our UKF did not perform as well as expected. 
 
 ![UKF](https://s3.amazonaws.com/cs8803/ukf_02_small.png)
 
-Below is a breakdown of how the UFK performed against the various input files. Overall the UKF with a Constant Acceleration model failed to perform as well as the constant velocity based model. We found that the noise covariance function had a large impact on how well the filter worked in predicting future positions. Unfortunatley we ran into trouble with developing a more sophisticated model for the noise covariance.
+Below is a breakdown of how the UFK performed against the various input files. Overall the UKF with a Constant Acceleration model failed to perform as well as the constant velocity based model. We found that the noise covariance function had a large impact on how well the filter worked in predicting future positions. Unfortunately we ran into trouble with developing a more sophisticated model for the noise covariance.
 
 | Test File       | Score        |
 | --------------- |:------------:|
