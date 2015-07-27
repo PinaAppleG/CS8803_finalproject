@@ -6,8 +6,6 @@ from filterpy.kalman import MerweScaledSigmaPoints
 from filterpy.kalman import UnscentedKalmanFilter as UKF
 from filterpy.common import Q_discrete_white_noise
 
-from optparse import OptionParser
-
 import pylab as pl
 
 #Enable debugging
@@ -58,10 +56,12 @@ def expectedResult(completeList):
     return completeList[len(completeList)-60:]
 
 def main():
+    if len(sys.argv) < 2:
+        print "ERROR: Filename not provided. Please specify the input sample file"
+        return
+    filename = sys.argv[0]
     completeLists = []
-    for i in range (1, 11):
-        fileName = "test" + ("%02d" % (i,)) + ".txt"
-        completeLists.append(createList("inputs/" + fileName))
+    completeLists.append(createList(fileName))
     actualResults = []
     for completeList in completeLists:
         actualResults.append(run(testList(completeList)))
