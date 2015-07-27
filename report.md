@@ -129,9 +129,9 @@ The following image shows the results for test case 02. This image shows 10 fram
 
 Below is a breakdown of how the UFK performed against the various input files. Overall the UKF with a Constant Acceleration model failed to perform as well as the constant velocity based model. We found that the noise covariance function had a large impact on how well the filter worked in predicting future positions. Unfortunatley we ran into trouble with developing a more sophisticated model for the noise covariance.
 
-| Test File        | Score      |
-| ------------- |:-------------:|
-| test01.txt      | 9832.56 |
+| Test File       | Score        |
+| --------------- |:------------:|
+| test01.txt      | 9832.56      |
 | test02.txt      | 7821.63      |
 | test03.txt      | 8006.84      |
 | test04.txt      | 8731.55      |
@@ -139,10 +139,36 @@ Below is a breakdown of how the UFK performed against the various input files. O
 | test06.txt      | 6236.91      |
 | test07.txt      | 1223.27      |
 | test08.txt      | 7186.66      |
-| test09.txt      | 14733.63      |
+| test09.txt      | 14733.63     |
 | test10.txt      | 9827.92      |
 
 ###Particle Filter
+
+To test out our particle filter, we chopped off the last 60 frames of the input files we were given and tried to predict what those 60 frames would be based off of the rest of the files. Overall our results were significantly better than the Kalman filter results, obtaining an overall average score of 1603.58 using the scoring algorithm provided in the assignment.
+
+This is a graph of the results for input04.txt, where the blue dots represent the actual path of the robot, and the red lines represent our prediction. This is one example where our prediction looks pretty good.
+
+![ParticleFilterResult04](ParticleFilterResult04.png "ParticleFilterResult04")
+
+Our prediction for input08.txt also looks close to the actual data:
+
+![ParticleFilterResult08](ParticleFilterResult08.png "ParticleFilterResult08")
+
+This is a table of our score for each of the input files: 
+
+| Test File       | Score       |
+| --------------- |:-----------:|
+| test01.txt      | 970.99      |
+| test02.txt      | 3687.04     |
+| test03.txt      | 1968.88     |
+| test04.txt      | 928.83      |
+| test05.txt      | 2260.43     |
+| test06.txt      | 1399.42     |
+| test07.txt      | 397.39      |
+| test08.txt      | 619.13      |
+| test09.txt      | 6095.52     |
+| test10.txt      | 993.96      |
+
 #Opportunities
 
 We mentioned above that there is a weakness in the Particle Filter approach in that if there is no particle that matches the current robot, we are bound to get poor results. This was demonstrated in the class lectures when sometimes, the randomly generated particles simply did not land in the correct location/direction matching the robot; in those cases the percentage of error was very high. In our implementation, as mentioned, the same weakness occurs in that if the robot does not match up to any of the previous locations and facing directions of the videos, we will not get a good estimate for the future location of the robot.
