@@ -86,6 +86,18 @@ We decided to pursue using UKF with a Constant Acceleration model. We believed t
 
 ###Particle Filter
 
+We spent some time trying to figure out how we could implement a particle filter in this scenario. In class, we had a Robot class that contained the movement logic for the robot, which made it very easy to create many "particles" that all acted exactly like the robot we were following. We thought of trying to create a similar Robot class that mimicked the robot's movement, but the robot's actual movement didn't seem to follow any rules that would be easy enough to code.
+
+We realized that we could treat each frame of video, in both the training data and the input files, as an instance of the robot (or a particle). Then we wouldn't have to create a function to mimic the movement of the robot, as we already know how the robot would move in each of those instances. Now we just needed to decide which "particle" our robot most closely related to at the end of the clip.
+
+To do this, we started by just looking at the ending position of the robot in the clip and finding the particle frame with the closest position. We then returned the 60 frames following that particle frame. The results were actually significantly better than the results we were able to get using the Kalman filters, so we decided to pursue this route further.
+
+To improve this algorithm further, we looked into matching on more than one frame. We tried looking for two consecutive frames that were closest to the last two frames of the clip. This improved the scores, so we then looked for N consecutive frames that were closest to the last N frames in the clip. Once the code was written to look for N frames, we simply changed the value of N to see what value of N gave us the best scores. We discovered that scores improved until we got to N equals 6, and then scores started to decline.
+
+Looking at a graph of the prediction on top of a plot of the clip, it was clear that the predictions were not in line with the actual position of the robot. This was because we had simply used the 60 subsequent frames of the closest particle and used them as our prediction. To fix this, we calculated the 60 subsequent x and y movements of the particle, and then applied those movements to the final position of the robot in order to create our prediction. This made our graph have a smooth transition from actual position to prediction.
+
+One final tweak that we made to the algorithm, was taking into account the direction of the robot at the end of the clip. Up until this point, it was possible that we could find a best match that was going in the opposite direction of our robot, and then the prediction would be way off. Now, when looking for a best match, we first check to make sure that the final direction of the particle is going in the same general direction as the particle. More specifically, we checked that the particle's velocity in the x and y directions had the same signs as the robot's velocity in the x and y directions.
+
 #Results
 ###Kalman Filter
 
