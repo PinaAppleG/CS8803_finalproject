@@ -154,7 +154,7 @@ Our prediction for input08.txt also looks close to the actual data:
 
 ![ParticleFilterResult08](ParticleFilterResult08.png "ParticleFilterResult08")
 
-This is a table of our score for each of the input files: 
+This is a table of our score for each of the input files:
 
 | Test File       | Score       |
 | --------------- |:-----------:|

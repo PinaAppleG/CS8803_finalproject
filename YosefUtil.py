@@ -176,7 +176,7 @@ def graph(filenum):
 
 #main()
 
-graph("04")
+graph("08")
 
 def test():
     completeLists = []
