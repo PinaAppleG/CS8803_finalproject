@@ -95,44 +95,65 @@ def run(input):
     # example: [[32,67],[35,67],[36,65],[36,64],[35,63]...]
     # output should be in the same form as input but contain only 60 frames
     output = []
-    # enter code here
+    # lists will contain all of the lists of data we have, including training data
+    # and test input data
     lists = []
+    # add a list of training data
     lists.append(createList("inputs/" + "training_data.txt"))
+    # add the ten input lists
     for i in range (1, 11):
         fileName = "test" + ("%02d" % (i,)) + ".txt"
         lists.append(testList(createList("inputs/" + fileName)))
+    # listId will store the index in lists of the list containing the best match
     listId = 0
+    # bestMatch will contain the index in the list of the best match
+    # e.g. the best match could be at lists[listId][bestMatch]
     bestMatch = -1
+    # matchDiff is the difference in distance between the current best match and the input
     matchDiff = 1000
+    # N is the number of points that we are going to compare from the end of the input to the particles
     N = 6
+    # loop through all of the lists
     for f in range(len(lists)):
+        # training will hold the current list
         training = lists[f]
+        # inputPoints will be the last N points in the input
         inputPoints = input[len(input)-N:]
+        # now we loop through the training list looking for the best match
+        # we start N points into the list and end when there are 60 points left
+        # because we compare N consecutive points and need 60 points to return
         for i in range(N-1,len(training)-60):
+            # test contains the N points that we will compare to the N points at the end of the input
             test = training[i-N+1:i+1]
-            vxtest1 = test[N-1][0] - test[N-2][0]
-            vytest1 = test[N-1][1] - test[N-2][1]
-            vxinput1 = inputPoints[N-1][0] - inputPoints[N-2][0]
-            vyinput1 = inputPoints[N-1][1] - inputPoints[N-2][1]
-            # vxtest2 = test[N-2][0] - test[N-3][0]
-            # vytest2 = test[N-2][1] - test[N-3][1]
-            # vxinput2 = inputPoints[N-2][0] - inputPoints[N-3][0]
-            # vyinput2 = inputPoints[N-2][1] - inputPoints[N-3][1]
-            if (vxtest1<0) == (vxinput1<0) and (vytest1<0) == (vyinput1<0):# and (vxtest2<0) == (vxinput2<0) and (vytest2<0) == (vyinput2<0):
+            # these are the velocities in the x and y directions between the last two points of the test data
+            vxtest = test[N-1][0] - test[N-2][0]
+            vytest = test[N-1][1] - test[N-2][1]
+            # these are the velocities in the x and y directions between the last two points of the input data
+            vxinput = inputPoints[N-1][0] - inputPoints[N-2][0]
+            vyinput = inputPoints[N-1][1] - inputPoints[N-2][1]
+            # first check that the velocities of the input and test have the same signs
+            if (vxtest<0) == (vxinput<0) and (vytest<0) == (vyinput<0):
+                # totalDiff is the total change in distance between the input and test N points
                 totalDiff = 0
                 for n in range(N):
                     totalDiff += changeInDist(inputPoints[n], test[n])
+                # if we found a better match than the currently saved match, update our variables for the new match
                 if totalDiff < matchDiff:
                     listId = f
                     bestMatch = i
                     matchDiff = totalDiff
     xdiff = []
     ydiff = []
+    # loop through the 60 subsequent points after the best match point and calculate
+    # the difference in x and y between each consecutive point, pushing those values
+    # to xdiff and ydiff respectively
     for i in range(bestMatch+1, bestMatch+61):
         prev = lists[listId][i-1]
         thisOne = lists[listId][i]
         xdiff.append(thisOne[0] - prev[0])
         ydiff.append(thisOne[1] - prev[1])
+    # loop through xdiff and ydiff, and apply those motions to the last point in the input,
+    # appending those 60 values to the output to return
     prev = input[len(input)-1]
     for i in range(len(xdiff)):
         output.append([prev[0] + xdiff[i], prev[1] + ydiff[i]])
