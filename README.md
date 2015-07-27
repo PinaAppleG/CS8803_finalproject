@@ -1,2 +1,6 @@
-# Team Rosie
-![Rosie](http://www.jrj-socrates.com/Cartoon%20Pics/Hanna%20Barbera/Jetsons/Rosie_300.gif)
+#Setup Instructions
+##finalproject.py
+* No additional libraries are needed to run the script
+
+##kalman_util.py
+* pip install filterpy
